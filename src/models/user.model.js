@@ -8,7 +8,7 @@ const userSchema = new Schema(
         ref: "Video",
       }
     ],
-    username: {
+    userName: {
       type: String,
       required: true,
       unique: true,
@@ -22,7 +22,7 @@ const userSchema = new Schema(
       lower: true,
       trim: true,
     },
-    fullname: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
