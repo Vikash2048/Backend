@@ -1,11 +1,15 @@
 import mongoose, { Schema } from "mongoose";
+import { hashPassword, accessTokenGenerator, refreshTokenGenerator, isPasswordCorrect } from "./user.query.js";
+
 
 const userSchema = new Schema(
   {
     watchHistory: [
       {
-        videoId: mongoose.Schema.Types.ObjectId,
-        ref: "Video",
+        videoId:{
+          type: Schema.Types.ObjectId,
+          ref: "Video"
+        }
       }
     ],
     userName: {
@@ -47,6 +51,14 @@ const userSchema = new Schema(
   }
 );
 
+// middleware 
+userSchema.pre("save", hashPassword)
+
+// methods
+userSchema.methods.isPasswordCorrect = isPasswordCorrect;
+userSchema.methods.accessTokenGenerator = accessTokenGenerator;
+userSchema.methods.refreshTokenGenerator = refreshTokenGenerator;
+
 const User = mongoose.model("User", userSchema);
 
-export { User, userSchema };
+export { User };
