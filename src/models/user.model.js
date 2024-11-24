@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { hashPassword, accessTokenGenerator, refreshTokenGenerator, isPasswordCorrect } from "./user.query.js";
+import { hashPassword, accessTokenGenerator, refreshTokenGenerator, isPasswordCorrect } from "./user.model.query.js";
 
 
 const userSchema = new Schema(
