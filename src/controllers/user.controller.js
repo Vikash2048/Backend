@@ -5,7 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler( async (req, res) => {
   const { userName, email, fullName, password } = req.body;
 
   // checking that any field is empty or not
@@ -65,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, userCreated, "User registered Successfully"));
 });
 
-const generateAccessAndRefreshToken = async (userId) => {
+const generateAccessAndRefreshToken = asyncHandler( async (userId) => {
   try {
     const user = await User.findById(userId);
     const accessToken = user.accessTokenGenerator();
@@ -80,10 +80,11 @@ const generateAccessAndRefreshToken = async (userId) => {
       "something went wrong while generating access and refresh token"
     );
   }
-};
+});
 
-const loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler( async (req, res) => {
   const { userName, email, password } = req.body;
+  console.log("req.user",req.user)
 
   if (!userName && !email) {
     throw new ApiError(400, "username or email is required");
@@ -212,4 +213,91 @@ const refreshAccessToken = asyncHandler( async (req,res) => {
 
 })
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler( async(req,res) => {
+  const { oldPassword, newPassword, confPassword } = req.body
+
+  if (newPassword !== confPassword){
+    throw new ApiError(400,"Password didn't match")
+  }
+
+  const user = await User.findById(req.user?._id)
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+  if(!isPasswordCorrect) {
+    throw new ApiError(400,"Invalid old password")
+  }
+
+  user.password = newPassword
+  user.save({validateBeforeSave: false})
+
+  return res
+  .status(200)
+  .json(200, {}, "Password Change Successfully")
+})
+
+const getCurrentUser = asyncHandler( async(req, res) => {
+  const currentUser = req.user
+
+  return res 
+  .status(200)
+  .json(200, {currentUser}, "Current User Fetch Successfully")
+})
+
+// update rest of ther detail as your need 
+const updateAvatarImage = asyncHandler( async(req, res) => {
+  const avatarImgPath = req.file?.path
+
+  if(!avatarImgPath){
+    throw new ApiError(400,"File path not found")
+  }
+
+  const avatar = uploadOnCloudinary(avatarImgPath)
+
+  if(!avatar){
+    throw new ApiError(400,"File not uploaded on cloudinary")
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url
+      }
+    },
+    {new: true}
+  ).select("-password")
+
+  return res 
+  .status(200)
+  .json(200,{user}, "Avatar Image Updated Successfully")
+})
+
+const updateCoverImage = asyncHandler( async(req, res) => {
+  const coverImgPath = req.file?.path
+
+  if(!coverImgPath){
+    throw new ApiError(400,"File path not found")
+  }
+
+  const coverImage = uploadOnCloudinary(avatarImgPath)
+
+  if(!coverImage){
+    throw new ApiError(400,"File not uploaded on cloudinary")
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url
+      }
+    },
+    {new: true}
+  ).select("-password")
+
+  return res 
+  .status(200)
+  .json(200,{user}, "Cover Image Updated Successfully")
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAvatarImage, updateCoverImage };
